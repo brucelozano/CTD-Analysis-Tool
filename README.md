@@ -1,6 +1,6 @@
-# CNV-First CTD Analysis Tool
+# CTD Analysis Tool
 
-CLI-first Python tool for working with processed Sea-Bird `.cnv` CTD files.
+CLI-first Python tool for working with processed  `.cnv` CTD files.
 
 ## Objectives
 
@@ -112,7 +112,7 @@ ctd-tool verify-ssha out/ssha/ssha_matches.csv --out out/ssha/verification_repor
 
 
 
-### Classify water type (Johnston/Boswell)
+### Classify water type
 
 ```bash
 ctd-tool classify-water-type out/ssha/ssha_matches.csv --out-dir out/classification
