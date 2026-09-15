@@ -1,0 +1,35 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local build/package artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Tool/runtime local state
+.cache/
+.mplconfig/
+
+# Generated analysis outputs
+out/
+
+# OS/editor noise
+.DS_Store
+.idea/
+.vscode/
+
+# Optional: large/private cruise data
+# DP09_CTD_CNV/
