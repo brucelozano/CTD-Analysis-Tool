@@ -51,21 +51,56 @@ def _parse_ctd_number(stem: str) -> int | None:
 
 
 def _parse_site_and_daynight(stem: str) -> tuple[str | None, str | None]:
-    parts = re.split(r"_CTD_", stem, flags=re.IGNORECASE)
-    if not parts:
-        return None, None
-    prefix = parts[0]
-    tokens = prefix.split("_")
+    normalized = _strip_suffix_tokens(stem)
+    tokens = [t for t in normalized.split("_") if t]
     if not tokens:
         return None, None
 
+    # Explicit token labels are highest-confidence.
+    explicit = _parse_explicit_day_night(tokens)
+    if explicit is not None:
+        idx, day_night = explicit
+        site = "_".join(tokens[:idx]) or None
+        if site:
+            return site, day_night
+
+    parts = re.split(r"_CTD_", normalized, flags=re.IGNORECASE)
+    prefix = parts[0] if parts else normalized
+    prefix_tokens = [t for t in prefix.split("_") if t]
+    if not prefix_tokens:
+        return None, None
+
     # Pattern like UTAH_N_CTD_262...
-    if tokens[-1].upper() in {"D", "N"}:
-        return "_".join(tokens[:-1]) or None, tokens[-1].upper()
+    last_token = prefix_tokens[-1].upper()
+    if last_token in {"D", "N"}:
+        return "_".join(prefix_tokens[:-1]) or None, last_token
 
     # Pattern like B082D_CTD_255...
-    last = tokens[-1]
-    if len(last) > 1 and last[-1].upper() in {"D", "N"}:
-        return "_".join(tokens[:-1] + [last[:-1]]) or None, last[-1].upper()
+    last = prefix_tokens[-1]
+    station_match = re.match(r"^([A-Za-z]+[0-9]+)([DN])$", last, flags=re.IGNORECASE)
+    if station_match:
+        return station_match.group(1), station_match.group(2).upper()
 
     return prefix or None, None
+
+
+def _strip_suffix_tokens(stem: str) -> str:
+    out = stem
+    changed = True
+    while changed:
+        changed = False
+        for suffix in ("_bin", "_sv", "_converted"):
+            if out.lower().endswith(suffix):
+                out = out[: -len(suffix)]
+                changed = True
+    return out
+
+
+def _parse_explicit_day_night(tokens: list[str]) -> tuple[int, str] | None:
+    for i, token in enumerate(tokens):
+        upper = token.upper()
+        if upper in {"D", "DAY"}:
+            return i, "D"
+        if upper in {"N", "NIGHT"}:
+            return i, "N"
+    return None
