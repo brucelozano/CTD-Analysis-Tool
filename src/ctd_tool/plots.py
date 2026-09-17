@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from ctd_tool.cast import CastRecord
+from ctd_tool.discovery import describe_cnv_path
 from ctd_tool.profiles import prepare_profile
 
 if "MPLCONFIGDIR" not in os.environ:
@@ -87,10 +88,10 @@ def plot_day_night_overlay(casts: list[CastRecord], output_dir: str | Path, site
         profile = prepare_profile(cast)
         if profile.empty:
             continue
-        cast_upper = cast.cast_id.upper()
-        if "_D_" in cast_upper or cast_upper.endswith("D"):
+        day_night = _infer_day_night_from_cast(cast)
+        if day_night == "D":
             day_profiles.append((cast.cast_id, profile))
-        elif "_N_" in cast_upper or cast_upper.endswith("N"):
+        elif day_night == "N":
             night_profiles.append((cast.cast_id, profile))
 
     if not day_profiles and not night_profiles:
@@ -118,6 +119,20 @@ def plot_day_night_overlay(casts: list[CastRecord], output_dir: str | Path, site
     fig.savefig(out_path, dpi=180)
     plt.close(fig)
     return out_path
+
+
+def _infer_day_night_from_cast(cast: CastRecord) -> str | None:
+    info = describe_cnv_path(cast.header.source_path)
+    if info.day_night in {"D", "N"}:
+        return info.day_night
+
+    # Fallback for unusual naming where site parser may fail.
+    cast_upper = cast.cast_id.upper()
+    if "_D_" in cast_upper:
+        return "D"
+    if "_N_" in cast_upper:
+        return "N"
+    return None
 
 
 WATER_TYPE_COLORS = {
